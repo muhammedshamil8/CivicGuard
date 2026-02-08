@@ -68,6 +68,33 @@ function ReportFormView({
     reader.readAsDataURL(file);
   };
 
+  const sendRequestsSequentially = async () => {
+    try {
+      // First API call - send email
+      const emailResponse = await fetch("https://civic-guard-puej.vercel.app/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "New Report Submitted",
+          content: "A new anonymous report has been submitted successfully.",
+        }),
+      });
+
+      const emailData = await emailResponse.json();
+      console.log("Email API Response:", emailData);
+
+      // Second API call - alert
+      const alertResponse = await fetch("https://civic-guard-puej.vercel.app/alert", {
+        method: "POST",
+      });
+
+      const alertData = await alertResponse.json();
+      console.log("Alert API Response:", alertData);
+    } catch (error) {
+      console.error("Error in API call:", error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -81,7 +108,7 @@ function ReportFormView({
     }
 
     await onSubmit(location, description, imageFile);
-
+    await sendRequestsSequentially();
     setLocation("");
     setDescription("");
     setImagePreview(null);
