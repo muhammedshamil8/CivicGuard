@@ -76,7 +76,7 @@ const Complaints: React.FC = () => {
         throw error;
       }
 
-      if (complaint.image_url) {
+      // if (complaint.image_url) {
         // First, fetch the image from the URL
         // const imageResponse = await fetch(complaint.image_url);
         // const imageBlob = await imageResponse.blob();
@@ -86,42 +86,42 @@ const Complaints: React.FC = () => {
         // formData.append('textData', complaint.description);
         // formData.append('url', complaint.image_url); // Add a filename
 
-        const response = await fetch(
-          'https://safespot-blockchain.vercel.app/upload-link-and-report',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              textData: complaint.description,
-              url: complaint.image_url,
-            }),
-          }
-        );
+      //   const response = await fetch(
+      //     'https://safespot-blockchain.vercel.app/upload-link-and-report',
+      //     {
+      //       method: 'POST',
+      //       headers: {
+      //         'Content-Type': 'application/json',
+      //       },
+      //       body: JSON.stringify({
+      //         textData: complaint.description,
+      //         url: complaint.image_url,
+      //       }),
+      //     }
+      //   );
 
-        if (!response.ok) {
-          throw new Error('Failed to upload image and report');
-        }
-      } else {
-        // If no image, use the upload-report endpoint
-        const response = await fetch(
-          'https://safespot-blockchain.vercel.app/upload-report',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              textData: complaint.description,
-            }),
-          }
-        );
+      //   if (!response.ok) {
+      //     throw new Error('Failed to upload image and report');
+      //   }
+      // } else {
+      //   // If no image, use the upload-report endpoint
+      //   const response = await fetch(
+      //     'https://safespot-blockchain.vercel.app/upload-report',
+      //     {
+      //       method: 'POST',
+      //       headers: {
+      //         'Content-Type': 'application/json',
+      //       },
+      //       body: JSON.stringify({
+      //         textData: complaint.description,
+      //       }),
+      //     }
+      //   );
 
-        if (!response.ok) {
-          throw new Error('Failed to upload report');
-        }
-      }
+      //   if (!response.ok) {
+      //     throw new Error('Failed to upload report');
+      //   }
+      // }
 
       toast.success('Complaint confirmed and reward assigned');
       fetchComplaints();
@@ -210,7 +210,7 @@ const Complaints: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">
+      <h1 className="text-2xl font-semibold text-gray-400 mb-6">
         Complaints Management
       </h1>
 
@@ -230,7 +230,7 @@ const Complaints: React.FC = () => {
           </div>
 
           <select
-            className="block w-full sm:w-auto pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+            className="block w-full sm:w-auto pl-3 pr-10 py-2 text-base !sr-only !text-black border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
           >
@@ -314,7 +314,11 @@ const Complaints: React.FC = () => {
                               ).toISOString()}
                             >
                               {formatDate(complaint?.created_at)}
-                            </time>
+                            </time><br/>
+                            Place {' '}
+                            <span>
+                              {complaint.location}
+                            </span>
                           </p>
                         </div>
                       </div>

@@ -74,7 +74,7 @@ const Blacklist: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Blacklisted Wallets</h1>
+      <h1 className="text-2xl font-semibold text-gray-400 mb-6">Blacklisted Wallets</h1>
       
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="relative rounded-md shadow-sm">
