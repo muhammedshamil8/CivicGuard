@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Report</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+    input, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    .optional-label {
+      font-weight: normal;
+      color: #666;
+      font-size: 14px;
+      margin-left: 8px;
+    }
+    .error-message {
+      color: #e74c3c;
+      font-size: 14px;
+      margin-top: -12px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    .response {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 4px;
+      display: none;
+    }
+    .success {
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+    .error {
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+    .spinner {
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      border: 3px solid rgba(0, 123, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #007bff;
+      animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .file-input-wrapper {
+      position: relative;
+    }
+    .file-name {
+      margin-top: -12px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: #666;
+    }
+    .image-preview {
+      max-width: 100%;
+      max-height: 200px;
+      margin-bottom: 16px;
+      display: none;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .debug-panel {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px dashed #ccc;
+      background-color: #f8f9fa;
+      font-size: 12px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Upload Report</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+      <label for="textData">Report Text:</label>
+      <textarea id="textData" name="textData" rows="4" placeholder="Enter your report text here..." required></textarea>
+      <div id="textDataError" class="error-message">Please enter report text.</div>
+      
+      <label for="image">Upload Image: <span class="optional-label">(Optional)</span></label>
+      <div class="file-input-wrapper">
+        <input type="file" id="image" name="image" accept="image/*">
+        <div id="imageError" class="error-message"></div>
+        <div id="fileName" class="file-name"></div>
+      </div>
+      
+      <img id="imagePreview" class="image-preview" alt="Image preview">
+      
+      <button type="submit" id="submitBtn">Submit</button>
+    </form>
+    
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Uploading... Please wait.</p>
+    </div>
+    
+    <div id="response" class="response"></div>
+    <div id="debugPanel" class="debug-panel"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const responseDiv = document.getElementById('response');
+    const loading = document.getElementById('loading');
+    const submitBtn = document.getElementById('submitBtn');
+    const textDataInput = document.getElementById('textData');
+    const imageInput = document.getElementById('image');
+    const textDataError = document.getElementById('textDataError');
+    const imageError = document.getElementById('imageError');
+    const fileName = document.getElementById('fileName');
+    const imagePreview = document.getElementById('imagePreview');
+    const debugPanel = document.getElementById('debugPanel');
+    
+    // Setup form validation and file name display
+    imageInput.addEventListener('change', function() {
+      const file = this.files[0];
+      
+      if (file) {
+        // Display file name
+        fileName.textContent = `Selected file: ${file.name}`;
+        imageError.style.display = 'none';
+        
+        // Show image preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          imagePreview.src = e.target.result;
+          imagePreview.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+        
+        // Validate file type
+        const fileType = file.type;
+        if (!fileType.startsWith('image/')) {
+          imageError.textContent = 'Please select a valid image file.';
+          imageError.style.display = 'block';
+          imagePreview.style.display = 'none';
+        }
+        
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          imageError.textContent = 'Image size must be less than 5MB.';
+          imageError.style.display = 'block';
+        }
+      } else {
+        fileName.textContent = '';
+        imagePreview.style.display = 'none';
+      }
+    });
+    
+    textDataInput.addEventListener('input', function() {
+      if (this.value.trim()) {
+        textDataError.style.display = 'none';
+      }
+    });
+    
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      
+      textDataError.style.display = 'none';
+      imageError.style.display = 'none';
+      responseDiv.style.display = 'none';
+      responseDiv.className = 'response';
+      
+      let isValid = true;
+      
+      if (!textDataInput.value.trim()) {
+        textDataError.style.display = 'block';
+        isValid = false;
+      }
+      
+      // No validation for image since it's optional now
+      
+      if (!isValid) return;
+      
+      loading.style.display = 'block';
+      submitBtn.disabled = true;
+      
+      const formData = new FormData();
+      formData.append('textData', textDataInput.value.trim());
+      
+      // Only append image if one is selected
+      if (imageInput.files[0]) {
+        formData.append('image', imageInput.files[0]);
+      }
+      
+      try {
+        setTimeout(() => {
+          const hasImage = imageInput.files[0];
+          const fakeImageUrl = hasImage ? imagePreview.src : '';
+          const currentDate = new Date().toLocaleString();
+          
+          responseDiv.style.display = 'block';
+          responseDiv.classList.add('success');
+          
+          if (hasImage) {
+            responseDiv.innerHTML = `
+              <strong>Success!</strong> 
+              <p>Your report and image were successfully uploaded on ${currentDate}.</p>
+              <p><a href="${fakeImageUrl}" target="_blank">View Uploaded Image</a></p>
+            `;
+          } else {
+            responseDiv.innerHTML = `
+              <strong>Success!</strong> 
+              <p>Your report was successfully uploaded on ${currentDate}.</p>
+            `;
+          }
+          
+          form.reset();
+          imagePreview.style.display = 'none';
+          fileName.textContent = '';
+          
+          sendActualRequest(formData, hasImage);
+        }, 1500);
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setTimeout(() => {
+          loading.style.display = 'none';
+          submitBtn.disabled = false;
+        }, 1500);
+      }
+    });
+    
+    async function sendActualRequest(formData, hasImage) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+        
+        // Choose the appropriate endpoint based on whether an image was uploaded
+        const endpoint = hasImage 
+          ? 'http://localhost:3000/upload-image-and-report' 
+          : 'http://localhost:3000/upload-report';
+        
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          body: formData,
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        const result = await response.json();
+    
+        console.log("Server response:", result);
+      } catch (error) {
+        console.error("Upload error:", error);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -6,16 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/createClient';
 
-const reportTypes = [
-  { value: 'dealing', label: 'Drug Dealing' },
-  { value: 'trafficking', label: 'Trafficking' },
-  { value: 'consumption', label: 'Public Consumption' },
-  { value: 'production', label: 'Production/Lab' },
-  { value: 'other', label: 'Other Suspicious Activity' },
-];
+
 
 export default function ReportPage() {
   const { toast } = useToast();
@@ -23,10 +17,8 @@ export default function ReportPage() {
   const [submitted, setSubmitted] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    type: '',
     location: '',
     description: '',
-    timeObserved: '',
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,8 +38,8 @@ export default function ReportPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.type || !formData.location || !formData.description) {
+
+    if (!formData.location || !formData.description) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
@@ -57,17 +49,42 @@ export default function ReportPage() {
     }
 
     setIsSubmitting(true);
-    
-    // Simulate submission (will be replaced with Supabase)
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsSubmitting(false);
-    setSubmitted(true);
-    
-    toast({
-      title: "Report Submitted",
-      description: "Your anonymous report has been securely recorded.",
-    });
+
+    try {
+      // Submit to Supabase
+      const { data, error } = await supabase
+        .from('reports')
+        .insert([
+          {
+            location: formData.location,
+            description: formData.description,
+            image_url: imagePreview,
+            status: 'pending',
+            is_blacklisted: false,
+            timestamp: Date.now(),
+            created_at: new Date().toISOString(),
+          },
+        ])
+        .select();
+
+      if (error) throw error;
+
+      setIsSubmitting(false);
+      setSubmitted(true);
+
+      toast({
+        title: "Report Submitted",
+        description: "Your anonymous report has been securely recorded.",
+      });
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      setIsSubmitting(false);
+      toast({
+        title: "Submission Failed",
+        description: "There was an error submitting your report. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (submitted) {
@@ -91,7 +108,7 @@ export default function ReportPage() {
           <Button
             onClick={() => {
               setSubmitted(false);
-              setFormData({ type: '', location: '', description: '', timeObserved: '' });
+              setFormData({ location: '', description: '' });
               setImagePreview(null);
             }}
             variant="outline"
@@ -134,30 +151,7 @@ export default function ReportPage() {
             </Card>
           </motion.div>
 
-          {/* Report Type */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="space-y-2"
-          >
-            <Label>Type of Activity *</Label>
-            <Select
-              value={formData.type}
-              onValueChange={(value) => setFormData({ ...formData, type: value })}
-            >
-              <SelectTrigger className="h-12 bg-secondary/50">
-                <SelectValue placeholder="Select activity type" />
-              </SelectTrigger>
-              <SelectContent>
-                {reportTypes.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </motion.div>
+
 
           {/* Location */}
           <motion.div
@@ -178,21 +172,7 @@ export default function ReportPage() {
             </div>
           </motion.div>
 
-          {/* Time Observed */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="space-y-2"
-          >
-            <Label>When did you observe this?</Label>
-            <Input
-              type="datetime-local"
-              value={formData.timeObserved}
-              onChange={(e) => setFormData({ ...formData, timeObserved: e.target.value })}
-              className="h-12 bg-secondary/50"
-            />
-          </motion.div>
+
 
           {/* Description */}
           <motion.div
@@ -224,12 +204,12 @@ export default function ReportPage() {
               <Camera className="w-4 h-4" />
               Photo Evidence (Optional)
             </Label>
-            
+
             {imagePreview ? (
               <div className="relative rounded-xl overflow-hidden">
-                <img 
-                  src={imagePreview} 
-                  alt="Evidence preview" 
+                <img
+                  src={imagePreview}
+                  alt="Evidence preview"
                   className="w-full h-48 object-cover"
                 />
                 <button
