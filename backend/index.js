@@ -18,7 +18,7 @@ console.log("TOKEN:", process.env.TWILIO_AUTH_TOKEN);
 const transporter = nodemailer.createTransport({
   service: 'gmail', // Use any SMTP provider
   auth: {
-    user: 'iedcemeadeveloper@gmail.com',
+    user: 'zamilfreelancing@gmail.com',
     pass: process.env.EMAIL_PASSWORD
   }
 });
